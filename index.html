@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vegego India - Quotation/Invoice Builder</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- jsPDF and html2canvas for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Custom styles for the application */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* bg-slate-50 */
+        }
+        /* Style for number input arrows */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+        /* Custom scrollbar for better aesthetics */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        /* Custom radio button styles */
+        .radio-label input:checked + .radio-bg {
+            background-color: #10b981; /* emerald-500 */
+            border-color: #10b981;
+        }
+        .radio-label input:checked + .radio-bg span {
+            color: white;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="container mx-auto p-4 lg:p-8">
+        
+        <!-- Main Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+
+            <!-- Left Column: Product Selection -->
+            <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center mb-6">
+                    <svg class="w-10 h-10 text-emerald-500 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25m-17.25 4.5v-1.875a3.375 3.375 0 003.375-3.375h1.5a1.125 1.125 0 011.125 1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375m17.25 4.5v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5c0-.621.504-1.125 1.125-1.125h1.5a3.375 3.375 0 003.375 3.375M3.375 12.75h17.25" />
+                    </svg>
+                    <div>
+                        <h1 class="text-2xl font-bold text-slate-900">Vegego India</h1>
+                        <p class="text-slate-500">Quotation/Invoice Builder</p>
+                    </div>
+                </div>
+                
+                <div id="product-list" class="space-y-6 max-h-[75vh] lg:max-h-[70vh] overflow-y-auto custom-scrollbar pr-2">
+                    <!-- Product categories will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <!-- Right Column: Bill Preview & Download -->
+            <div class="lg:col-span-2">
+                <div class="lg:sticky top-8">
+                    <!-- Client Details -->
+                     <div class="mb-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                        <label for="client-name" class="block text-sm font-medium text-slate-700 mb-1">Client / Customer Name</label>
+                        <input type="text" id="client-name" class="w-full border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" placeholder="Enter name here">
+                        <span id="client-name-error" class="text-xs text-red-500 mt-1 hidden">Client name is required.</span>
+                    </div>
+
+                    <!-- Document Type Selector -->
+                    <div class="mb-4 bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex items-center">
+                        <label class="flex-1 text-center cursor-pointer radio-label">
+                            <input type="radio" name="docType" value="Quotation" class="hidden" onchange="updateDocumentType(this.value)" checked>
+                            <div class="radio-bg rounded-md py-2 px-4 border border-slate-200 transition-all duration-200">
+                                <span class="font-semibold text-slate-600">Quotation</span>
+                            </div>
+                        </label>
+                        <label class="flex-1 text-center cursor-pointer radio-label">
+                            <input type="radio" name="docType" value="Sales Invoice" class="hidden" onchange="updateDocumentType(this.value)">
+                            <div class="radio-bg rounded-md py-2 px-4 border border-slate-200 transition-all duration-200">
+                                <span class="font-semibold text-slate-600">Sales Invoice</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div id="bill-preview-container" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <div id="bill-content" class="min-h-[400px]">
+                             <div class="text-center p-8">
+                                <h3 class="text-lg font-semibold text-slate-700 mb-2">Your Document is Empty</h3>
+                                <p class="text-slate-500">Add items from the left to get started.</p>
+                            </div>
+                        </div>
+
+                        <button id="download-pdf-btn" class="w-full mt-6 bg-emerald-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-emerald-600 transition-all duration-300 flex items-center justify-center disabled:bg-slate-300 disabled:cursor-not-allowed" disabled>
+                            <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                            Download PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const products = [
+            { category: "Leafy Greens", items: [{ id: 1, name: "Spinach", unit: "bunch", price: 30 }, { id: 2, name: "Lettuce", unit: "piece", price: 50 }, { id: 3, name: "Coriander", unit: "bunch", price: 20 }, { id: 4, name: "Mint", unit: "bunch", price: 15 }] },
+            { category: "Root Vegetables", items: [{ id: 5, name: "Potato", unit: "kg", price: 35 }, { id: 6, name: "Onion", unit: "kg", price: 40 }, { id: 7, name: "Carrot", unit: "kg", price: 60 }, { id: 8, name: "Radish", unit: "kg", price: 45 }] },
+            { category: "Cruciferous Vegetables", items: [{ id: 9, name: "Cauliflower", unit: "piece", price: 40 }, { id: 10, name: "Broccoli", unit: "piece", price: 70 }, { id: 11, name: "Cabbage", unit: "piece", price: 30 }] },
+            { category: "Other Vegetables", items: [{ id: 12, name: "Tomato", unit: "kg", price: 80 }, { id: 13, name: "Cucumber", unit: "kg", price: 50 }, { id: 14, name: "Bell Pepper (Capsicum)", unit: "kg", price: 100 }, { id: 15, name: "Brinjal (Eggplant)", unit: "kg", price: 50 }] }
+        ];
+
+        // --- STATE ---
+        let cart = {};
+        let documentType = 'Quotation';
+        let clientName = '';
+        let previousDues = 0;
+        let paymentMade = 0;
+        let discount = 0;
+
+        // --- DOM ELEMENTS ---
+        const productListContainer = document.getElementById('product-list');
+        const billContentContainer = document.getElementById('bill-content');
+        const downloadBtn = document.getElementById('download-pdf-btn');
+        const clientNameInput = document.getElementById('client-name');
+        const clientNameError = document.getElementById('client-name-error');
+
+        // --- FUNCTIONS ---
+
+        function initializeProductList() {
+            let content = '';
+            products.forEach(category => {
+                content += `<div><h2 class="text-lg font-semibold text-slate-600 mb-3 border-b pb-2">${category.category}</h2><div class="space-y-4">`;
+                category.items.forEach(item => {
+                    content += `
+                        <div class="flex flex-wrap gap-y-2 justify-between items-center">
+                            <div class="w-full sm:w-auto sm:flex-grow pr-4">
+                                <span class="font-medium">${item.name}</span>
+                                <span class="text-xs text-slate-500"> (${item.unit})</span>
+                            </div>
+                            <div class="flex gap-x-2 w-full sm:w-auto">
+                                <div class="relative flex-1 sm:flex-none sm:w-24">
+                                    <span class="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₹</span>
+                                    <input type="number" min="0" id="price-${item.id}" value="${item.price}" class="w-full text-center border border-slate-300 rounded-md p-1.5 pl-6 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" oninput="updateCart(${item.id}, '${category.category}')">
+                                </div>
+                                <div class="flex-1 sm:flex-none sm:w-24">
+                                    <input type="number" min="0" id="qty-${item.id}" placeholder="Qty" class="w-full text-center border border-slate-300 rounded-md p-1.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition" oninput="updateCart(${item.id}, '${category.category}')">
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                content += `</div></div>`;
+            });
+            productListContainer.innerHTML = content;
+        }
+
+        function updateCart(id, category) {
+            const quantity = parseFloat(document.getElementById(`qty-${id}`).value) || 0;
+            const price = parseFloat(document.getElementById(`price-${id}`).value) || 0;
+            const originalItem = products.flatMap(c => c.items).find(i => i.id === id);
+            if (quantity > 0) {
+                cart[id] = { name: originalItem.name, unit: originalItem.unit, category, quantity, price, total: quantity * price };
+            } else {
+                delete cart[id];
+            }
+            updateBillPreview();
+        }
+        
+        function updateDocumentType(type) {
+            documentType = type;
+            updateBillPreview();
+        }
+
+        function updatePaymentFields() {
+            previousDues = parseFloat(document.getElementById('previous-dues')?.value) || 0;
+            paymentMade = parseFloat(document.getElementById('payment-made')?.value) || 0;
+            discount = parseFloat(document.getElementById('discount')?.value) || 0;
+            updateBillPreview();
+        }
+
+        function generateDocumentId() {
+            const namePart = clientName.trim().split(' ').map(n => n[0] || '').join('').toUpperCase() || 'CUST';
+            const date = new Date();
+            const datePart = `${String(date.getDate()).padStart(2, '0')}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getFullYear()).slice(-2)}`;
+            return `${namePart}-${datePart}`;
+        }
+
+        function updateBillPreview() {
+            const cartItems = Object.values(cart);
+            const hasItems = cartItems.length > 0;
+            const hasClientName = clientName.trim() !== '';
+
+            downloadBtn.disabled = !hasItems || !hasClientName;
+
+            if (!hasItems) {
+                billContentContainer.innerHTML = `<div class="text-center p-8"><h3 class="text-lg font-semibold text-slate-700 mb-2">Your Document is Empty</h3><p class="text-slate-500">Add items from the left to get started.</p></div>`;
+                return;
+            }
+
+            const subTotal = cartItems.reduce((acc, item) => acc + item.total, 0);
+            const grandTotal = subTotal - discount;
+            const balanceDue = subTotal + previousDues - paymentMade;
+            const groupedByCategory = cartItems.reduce((acc, item) => {
+                (acc[item.category] = acc[item.category] || []).push(item);
+                return acc;
+            }, {});
+
+            let billHTML = `
+                <div class="space-y-4">
+                    <!-- Header -->
+                    <div class="flex justify-between items-start pb-2 border-b-2 border-slate-200">
+                        <div class="text-left">
+                            <h2 class="text-xl font-bold text-slate-800">Vegego India</h2>
+                            <p class="text-xs text-slate-500">Mir Alam Mandi, Hyderabad</p>
+                            <p class="text-xs text-slate-500 mt-1">Mr. Owais (+91 86881 60664)</p>
+                        </div>
+                        <div class="text-right">
+                            <h3 class="font-bold text-lg text-emerald-600">${documentType}</h3>
+                            <p class="text-xs text-slate-500">No: ${generateDocumentId()}</p>
+                            <p class="text-xs text-slate-500">Date: ${new Date().toLocaleDateString('en-IN')}</p>
+                        </div>
+                    </div>
+                    <!-- Client Info -->
+                    <div>
+                        <h4 class="text-sm font-semibold text-slate-600">Bill To:</h4>
+                        <p class="text-sm">${clientName || 'Valued Customer'}</p>
+                    </div>
+
+                    <!-- Items Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border border-slate-200">
+                            <thead class="bg-slate-100">
+                                <tr>
+                                    <th class="text-left font-semibold py-2 px-2 w-[5%] border border-slate-200">Sl.</th>
+                                    <th class="text-left font-semibold py-2 px-2 w-[35%] border border-slate-200">Item</th>
+                                    <th class="text-center font-semibold py-2 px-2 w-[25%] border border-slate-200">Price</th>
+                                    <th class="text-center font-semibold py-2 px-2 w-[15%] border border-slate-200">Qty</th>
+                                    <th class="text-right font-semibold py-2 px-2 w-[20%] border border-slate-200">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+            
+            let serialNumber = 1;
+            for (const category in groupedByCategory) {
+                billHTML += `<tr><td colspan="5" class="pt-3 pb-1 px-2 border-x border-slate-200"><h3 class="font-semibold text-sm text-emerald-700">${category}</h3></td></tr>`;
+                groupedByCategory[category].forEach(item => {
+                    billHTML += `<tr class="border-b border-slate-200">
+                        <td class="py-2 px-2 text-left border border-slate-200">${serialNumber++}.</td>
+                        <td class="py-2 px-2 text-left border border-slate-200">${item.name}</td>
+                        <td class="py-2 px-2 text-center text-slate-600 border border-slate-200">₹${item.price.toFixed(2)} / ${item.unit}</td>
+                        <td class="text-center py-2 px-2 border border-slate-200">${item.quantity}</td>
+                        <td class="text-right py-2 px-2 font-medium border border-slate-200">₹${item.total.toFixed(2)}</td>
+                    </tr>`;
+                });
+            }
+
+            billHTML += `</tbody></table></div>`;
+            
+            // --- Conditional Totals Section ---
+            if (documentType === 'Sales Invoice') {
+                billHTML += `
+                    <div class="mt-4 pt-2 border-t space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-slate-600">Subtotal</span><span class="font-medium">₹${subTotal.toFixed(2)}</span></div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-600">Previous Dues</span>
+                            <div class="flex items-center"><span class="mr-1 text-slate-500">(+) ₹</span><input type="number" id="previous-dues" value="${previousDues}" oninput="updatePaymentFields()" class="w-24 text-right border border-slate-300 rounded-md p-1 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition"></div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-600">Payment Received</span>
+                            <div class="flex items-center"><span class="mr-1 text-slate-500">(-) ₹</span><input type="number" id="payment-made" value="${paymentMade}" oninput="updatePaymentFields()" class="w-24 text-right border border-slate-300 rounded-md p-1 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition"></div>
+                        </div>
+                        <div class="flex justify-between font-bold text-xl mt-2 pt-2 border-t-2 border-emerald-200 bg-emerald-50 text-emerald-800 p-3 rounded-lg">
+                            <span>Balance Due</span><span>₹${balanceDue.toFixed(2)}</span>
+                        </div>
+                    </div>`;
+            } else { // Quotation
+                billHTML += `
+                    <div class="mt-4 pt-2 border-t space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-slate-600">Subtotal</span><span class="font-medium">₹${subTotal.toFixed(2)}</span></div>
+                         <div class="flex justify-between items-center">
+                            <span class="text-slate-600">Discount</span>
+                            <div class="flex items-center"><span class="mr-1 text-slate-500">(-) ₹</span><input type="number" id="discount" value="${discount}" oninput="updatePaymentFields()" class="w-24 text-right border border-slate-300 rounded-md p-1 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition"></div>
+                        </div>
+                        <div class="flex justify-between font-bold text-xl mt-2 pt-2 border-t-2 border-emerald-200 bg-emerald-50 text-emerald-800 p-3 rounded-lg">
+                            <span>Grand Total</span><span>₹${grandTotal.toFixed(2)}</span>
+                        </div>
+                    </div>`;
+            }
+            billHTML += `</div>`;
+            
+            billContentContainer.innerHTML = billHTML;
+        }
+
+        async function generatePDF() {
+            if (clientName.trim() === '') {
+                clientNameInput.classList.add('border-red-500');
+                clientNameError.classList.remove('hidden');
+                return;
+            }
+
+            downloadBtn.innerHTML = 'Generating...';
+            downloadBtn.disabled = true;
+
+            const { jsPDF } = window.jspdf;
+            const cartItems = Object.values(cart);
+            const subTotal = cartItems.reduce((acc, item) => acc + item.total, 0);
+            const grandTotal = subTotal - discount;
+            const balanceDue = subTotal + previousDues - paymentMade;
+
+            let pdfContentHTML = `
+                <div style="font-family: 'Inter', sans-serif; color: #334155; padding: 40px; width: 794px; background-color: white; position: relative; min-height: 1123px;">
+                    <div style="padding-bottom: 80px;"> <!-- Content wrapper with padding for footer -->
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="vertical-align: top;">
+                                    <h1 style="font-size: 28px; font-weight: 700; color: #059669; margin: 0;">Vegego India</h1>
+                                    <p style="font-size: 12px; margin: 5px 0 0 0;">Mir Alam Mandi, Hyderabad</p>
+                                    <p style="font-size: 12px; margin: 5px 0 0 0;">Mr. Owais (+91 86881 60664)</p>
+                                </td>
+                                <td style="text-align: right; vertical-align: top;">
+                                    <h2 style="font-size: 24px; font-weight: 600; margin: 0;">${documentType.toUpperCase()}</h2>
+                                    <p style="font-size: 12px; margin: 5px 0 0 0;"><strong>ID:</strong> ${generateDocumentId()}</p>
+                                    <p style="font-size: 12px; margin: 5px 0 0 0;"><strong>Date:</strong> ${new Date().toLocaleDateString('en-IN')}</p>
+                                </td>
+                            </tr>
+                        </table>
+                        <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                             <p style="font-size: 12px; margin: 0; color: #64748b;">BILL TO</p>
+                             <p style="font-size: 16px; font-weight: 600; margin: 5px 0 0 0;">${clientName || 'Valued Customer'}</p>
+                        </div>
+                        <table style="width: 100%; margin-top: 30px; border-collapse: collapse; font-size: 14px;">
+                            <thead style="background-color: #f1f5f9;">
+                                <tr>
+                                    <th style="padding: 12px; text-align: left; width: 5%; border: 1px solid #e2e8f0;">Sl.</th>
+                                    <th style="padding: 12px; text-align: left; width: 40%; border: 1px solid #e2e8f0;">Item</th>
+                                    <th style="padding: 12px; text-align: center; width: 20%; border: 1px solid #e2e8f0;">Price</th>
+                                    <th style="padding: 12px; text-align: center; width: 15%; border: 1px solid #e2e8f0;">Quantity</th>
+                                    <th style="padding: 12px; text-align: right; width: 20%; border: 1px solid #e2e8f0;">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+            
+            const groupedByCategory = cartItems.reduce((acc, item) => {
+                (acc[item.category] = acc[item.category] || []).push(item); return acc; }, {});
+
+            let serialNumber = 1;
+            for (const category in groupedByCategory) {
+                pdfContentHTML += `
+                        <tr>
+                            <td colspan="5" style="padding: 10px 12px; border: 1px solid #e2e8f0; background-color: #f8fafc;">
+                                <h3 style="font-size: 14px; font-weight: 600; color: #059669; margin: 0;">${category}</h3>
+                            </td>
+                        </tr>`;
+                groupedByCategory[category].forEach(item => {
+                    pdfContentHTML += `
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">${serialNumber++}.</td>
+                                <td style="padding: 12px; text-align: left; font-weight: 500; border: 1px solid #e2e8f0;">${item.name}</td>
+                                <td style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">₹${item.price.toFixed(2)} / ${item.unit}</td>
+                                <td style="padding: 12px; text-align: center; border: 1px solid #e2e8f0;">${item.quantity}</td>
+                                <td style="padding: 12px; text-align: right; font-weight: 500; border: 1px solid #e2e8f0;">₹${item.total.toFixed(2)}</td>
+                            </tr>`;
+                });
+            }
+
+            pdfContentHTML += `</tbody></table>
+                        <table style="width: 100%; margin-top: 20px;">
+                            <tr><td style="width: 50%;"></td><td style="width: 50%;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">`;
+
+            if (documentType === 'Sales Invoice') {
+                pdfContentHTML += `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 10px;">Subtotal</td><td style="padding: 10px; text-align: right;">₹${subTotal.toFixed(2)}</td></tr>
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 10px;">Previous Dues</td><td style="padding: 10px; text-align: right;">(+) ₹${previousDues.toFixed(2)}</td></tr>
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 10px;">Payment Received</td><td style="padding: 10px; text-align: right;">(-) ₹${paymentMade.toFixed(2)}</td></tr>
+                                    <tr style="background-color: #ecfdf5; font-weight: 700; color: #065f46;">
+                                        <td style="padding: 15px; font-size: 18px;">Balance Due</td><td style="padding: 15px; text-align: right; font-size: 18px;">₹${balanceDue.toFixed(2)}</td></tr>`;
+            } else { // Quotation
+                 pdfContentHTML += `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px;">Subtotal</td><td style="padding: 10px; text-align: right;">₹${subTotal.toFixed(2)}</td></tr>
+                                    <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px;">Discount</td><td style="padding: 10px; text-align: right;">(-) ₹${discount.toFixed(2)}</td></tr>
+                                    <tr style="background-color: #ecfdf5; font-weight: 700; color: #065f46;">
+                                        <td style="padding: 15px; font-size: 18px;">Grand Total</td><td style="padding: 15px; text-align: right; font-size: 18px;">₹${grandTotal.toFixed(2)}</td></tr>`;
+            }
+            
+            pdfContentHTML += `</table></td></tr></table>
+                    </div> <!-- End content wrapper -->
+                    <div style="position: absolute; bottom: 20px; left: 40px; right: 40px; padding-top: 15px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 10px; color: #94a3b8;">
+                        <p style="margin: 0;">Thank you for your business!</p>
+                        <p style="margin-top: 5px;">Design & Developed by Mr. Zubair Uddin</p>
+                    </div>
+                </div>`;
+
+            const pdfTemplate = document.createElement('div');
+            pdfTemplate.innerHTML = pdfContentHTML;
+            pdfTemplate.style.position = 'absolute';
+            pdfTemplate.style.left = '-9999px';
+            document.body.appendChild(pdfTemplate);
+
+            try {
+                const canvas = await html2canvas(pdfTemplate.firstElementChild, { scale: 3 });
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`Vegego-${documentType.replace(' ', '_')}-${generateDocumentId()}.pdf`);
+
+            } catch (error) {
+                console.error("Error generating PDF:", error);
+            } finally {
+                document.body.removeChild(pdfTemplate);
+                downloadBtn.innerHTML = `<svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>Download PDF`;
+                // Re-enable button only if client name is present
+                if (clientName.trim() !== '' && Object.keys(cart).length > 0) {
+                    downloadBtn.disabled = false;
+                }
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        document.addEventListener('DOMContentLoaded', initializeProductList);
+        downloadBtn.addEventListener('click', generatePDF);
+        clientNameInput.addEventListener('input', (e) => {
+            clientName = e.target.value;
+            if (clientName.trim() !== '') {
+                clientNameInput.classList.remove('border-red-500');
+                clientNameError.classList.add('hidden');
+            }
+            // Update preview and button state
+            if (Object.keys(cart).length > 0) {
+                updateBillPreview();
+            } else {
+                downloadBtn.disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>
