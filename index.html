@@ -405,18 +405,22 @@
             if (documentType === 'Sales Invoice') {
                 pdfContentHTML += `
                                         <tr style="border-bottom: 1px solid #e2e8f0;">
-                                            <td style="padding: 10px;">Subtotal</td><td style="padding: 10px; text-align: right;">₹${subTotal.toFixed(2)}</td></tr>
-                                        <tr style="border-bottom: 1px solid #e2e8f0;">
-                                            <td style="padding: 10px;">Previous Dues</td><td style="padding: 10px; text-align: right;">(+) ₹${previousDues.toFixed(2)}</td></tr>
-                                        <tr style="border-bottom: 1px solid #e2e8f0;">
-                                            <td style="padding: 10px;">Payment Received</td><td style="padding: 10px; text-align: right;">(-) ₹${paymentMade.toFixed(2)}</td></tr>
-                                        <tr style="background-color: #ecfdf5; font-weight: 700; color: #065f46;">
+                                            <td style="padding: 10px;">Subtotal</td><td style="padding: 10px; text-align: right;">₹${subTotal.toFixed(2)}</td></tr>`;
+                if (previousDues > 0) {
+                    pdfContentHTML += `<tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px;">Previous Dues</td><td style="padding: 10px; text-align: right;">(+) ₹${previousDues.toFixed(2)}</td></tr>`;
+                }
+                if (paymentMade > 0) {
+                    pdfContentHTML += `<tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px;">Payment Received</td><td style="padding: 10px; text-align: right;">(-) ₹${paymentMade.toFixed(2)}</td></tr>`;
+                }
+                pdfContentHTML += `<tr style="background-color: #ecfdf5; font-weight: 700; color: #065f46;">
                                             <td style="padding: 15px; font-size: 18px;">Balance Due</td><td style="padding: 15px; text-align: right; font-size: 18px;">₹${balanceDue.toFixed(2)}</td></tr>`;
             } else { // Quotation
                  pdfContentHTML += `
-                                        <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px;">Subtotal</td><td style="padding: 10px; text-align: right;">₹${subTotal.toFixed(2)}</td></tr>
-                                        <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px;">Discount</td><td style="padding: 10px; text-align: right;">(-) ₹${discount.toFixed(2)}</td></tr>
-                                        <tr style="background-color: #ecfdf5; font-weight: 700; color: #065f46;">
+                                        <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px;">Subtotal</td><td style="padding: 10px; text-align: right;">₹${subTotal.toFixed(2)}</td></tr>`;
+                if (discount > 0) {
+                    pdfContentHTML += `<tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px;">Discount</td><td style="padding: 10px; text-align: right;">(-) ₹${discount.toFixed(2)}</td></tr>`;
+                }
+                pdfContentHTML += `<tr style="background-color: #ecfdf5; font-weight: 700; color: #065f46;">
                                             <td style="padding: 15px; font-size: 18px;">Grand Total</td><td style="padding: 15px; text-align: right; font-size: 18px;">₹${grandTotal.toFixed(2)}</td></tr>`;
             }
             
