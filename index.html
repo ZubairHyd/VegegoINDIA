@@ -8,9 +8,10 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- jsPDF and html2canvas for PDF generation -->
+    <!-- jsPDF and html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -185,8 +186,11 @@
             const quantity = parseFloat(document.getElementById(`qty-${id}`).value) || 0;
             const price = parseFloat(document.getElementById(`price-${id}`).value) || 0;
             const originalItem = products.flatMap(c => c.items).find(i => i.id === id);
-            if (quantity > 0) {
+            if (quantity >= 0) { // Allow 0 to remove item
                 cart[id] = { name: originalItem.name, unit: originalItem.unit, category, quantity, price, total: quantity * price };
+                 if (quantity === 0) {
+                    delete cart[id];
+                }
             } else {
                 delete cart[id];
             }
@@ -329,6 +333,8 @@
             downloadBtn.disabled = true;
 
             const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            
             const cartItems = Object.values(cart);
             const subTotal = cartItems.reduce((acc, item) => acc + item.total, 0);
             const grandTotal = subTotal - discount;
@@ -336,36 +342,37 @@
 
             let pdfContentHTML = `
                 <div style="font-family: 'Inter', sans-serif; color: #334155; padding: 40px; width: 794px; background-color: white;">
-                    <div style="min-height: 1040px; position: relative;"> <!-- Content wrapper -->
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <tr>
-                                <td style="vertical-align: top;">
-                                    <h1 style="font-size: 28px; font-weight: 700; color: #059669; margin: 0;">Vegego India</h1>
-                                    <p style="font-size: 12px; margin: 5px 0 0 0;">Mir Alam Mandi, Hyderabad</p>
-                                    <p style="font-size: 12px; margin: 5px 0 0 0;">Mr. Owais (+91 86881 60664)</p>
-                                </td>
-                                <td style="text-align: right; vertical-align: top;">
-                                    <h2 style="font-size: 24px; font-weight: 600; margin: 0;">${documentType.toUpperCase()}</h2>
-                                    <p style="font-size: 12px; margin: 5px 0 0 0;"><strong>ID:</strong> ${generateDocumentId()}</p>
-                                    <p style="font-size: 12px; margin: 5px 0 0 0;"><strong>Date:</strong> ${new Date().toLocaleDateString('en-IN')}</p>
-                                </td>
-                            </tr>
-                        </table>
-                        <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
-                             <p style="font-size: 12px; margin: 0; color: #64748b;">BILL TO</p>
-                             <p style="font-size: 16px; font-weight: 600; margin: 5px 0 0 0;">${clientName || 'Valued Customer'}</p>
-                        </div>
-                        <table style="width: 100%; margin-top: 30px; border-collapse: collapse; font-size: 14px;">
-                            <thead style="background-color: #f1f5f9;">
+                    <div style="min-height: 1040px; position: relative; display: flex; flex-direction: column;"> <!-- Content wrapper -->
+                        <div style="flex-grow: 1;">
+                            <table style="width: 100%; border-collapse: collapse;">
                                 <tr>
-                                    <th style="padding: 12px; text-align: left; width: 5%; border: 1px solid #e2e8f0;">Sl.</th>
-                                    <th style="padding: 12px; text-align: left; width: 40%; border: 1px solid #e2e8f0;">Item</th>
-                                    <th style="padding: 12px; text-align: center; width: 20%; border: 1px solid #e2e8f0;">Price</th>
-                                    <th style="padding: 12px; text-align: center; width: 15%; border: 1px solid #e2e8f0;">Quantity</th>
-                                    <th style="padding: 12px; text-align: right; width: 20%; border: 1px solid #e2e8f0;">Amount</th>
+                                    <td style="vertical-align: top;">
+                                        <h1 style="font-size: 28px; font-weight: 700; color: #059669; margin: 0;">Vegego India</h1>
+                                        <p style="font-size: 12px; margin: 5px 0 0 0;">Mir Alam Mandi, Hyderabad</p>
+                                        <p style="font-size: 12px; margin: 5px 0 0 0;">Mr. Owais (+91 86881 60664)</p>
+                                    </td>
+                                    <td style="text-align: right; vertical-align: top;">
+                                        <h2 style="font-size: 24px; font-weight: 600; margin: 0;">${documentType.toUpperCase()}</h2>
+                                        <p style="font-size: 12px; margin: 5px 0 0 0;"><strong>ID:</strong> ${generateDocumentId()}</p>
+                                        <p style="font-size: 12px; margin: 5px 0 0 0;"><strong>Date:</strong> ${new Date().toLocaleDateString('en-IN')}</p>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>`;
+                            </table>
+                            <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                                 <p style="font-size: 12px; margin: 0; color: #64748b;">BILL TO</p>
+                                 <p style="font-size: 16px; font-weight: 600; margin: 5px 0 0 0;">${clientName || 'Valued Customer'}</p>
+                            </div>
+                            <table style="width: 100%; margin-top: 30px; border-collapse: collapse; font-size: 14px;">
+                                <thead style="background-color: #f1f5f9;">
+                                    <tr>
+                                        <th style="padding: 12px; text-align: left; width: 5%; border: 1px solid #e2e8f0;">Sl.</th>
+                                        <th style="padding: 12px; text-align: left; width: 40%; border: 1px solid #e2e8f0;">Item</th>
+                                        <th style="padding: 12px; text-align: center; width: 20%; border: 1px solid #e2e8f0;">Price</th>
+                                        <th style="padding: 12px; text-align: center; width: 15%; border: 1px solid #e2e8f0;">Quantity</th>
+                                        <th style="padding: 12px; text-align: right; width: 20%; border: 1px solid #e2e8f0;">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
             
             const groupedByCategory = cartItems.reduce((acc, item) => {
                 (acc[item.category] = acc[item.category] || []).push(item); return acc; }, {});
@@ -391,30 +398,31 @@
             }
 
             pdfContentHTML += `</tbody></table>
-                        <table style="width: 100%; margin-top: 20px;">
-                            <tr><td style="width: 50%;"></td><td style="width: 50%;">
-                                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">`;
+                            <table style="width: 100%; margin-top: 20px;">
+                                <tr><td style="width: 50%;"></td><td style="width: 50%;">
+                                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">`;
 
             if (documentType === 'Sales Invoice') {
                 pdfContentHTML += `
-                                    <tr style="border-bottom: 1px solid #e2e8f0;">
-                                        <td style="padding: 10px;">Subtotal</td><td style="padding: 10px; text-align: right;">₹${subTotal.toFixed(2)}</td></tr>
-                                    <tr style="border-bottom: 1px solid #e2e8f0;">
-                                        <td style="padding: 10px;">Previous Dues</td><td style="padding: 10px; text-align: right;">(+) ₹${previousDues.toFixed(2)}</td></tr>
-                                    <tr style="border-bottom: 1px solid #e2e8f0;">
-                                        <td style="padding: 10px;">Payment Received</td><td style="padding: 10px; text-align: right;">(-) ₹${paymentMade.toFixed(2)}</td></tr>
-                                    <tr style="background-color: #ecfdf5; font-weight: 700; color: #065f46;">
-                                        <td style="padding: 15px; font-size: 18px;">Balance Due</td><td style="padding: 15px; text-align: right; font-size: 18px;">₹${balanceDue.toFixed(2)}</td></tr>`;
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="padding: 10px;">Subtotal</td><td style="padding: 10px; text-align: right;">₹${subTotal.toFixed(2)}</td></tr>
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="padding: 10px;">Previous Dues</td><td style="padding: 10px; text-align: right;">(+) ₹${previousDues.toFixed(2)}</td></tr>
+                                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                                            <td style="padding: 10px;">Payment Received</td><td style="padding: 10px; text-align: right;">(-) ₹${paymentMade.toFixed(2)}</td></tr>
+                                        <tr style="background-color: #ecfdf5; font-weight: 700; color: #065f46;">
+                                            <td style="padding: 15px; font-size: 18px;">Balance Due</td><td style="padding: 15px; text-align: right; font-size: 18px;">₹${balanceDue.toFixed(2)}</td></tr>`;
             } else { // Quotation
                  pdfContentHTML += `
-                                    <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px;">Subtotal</td><td style="padding: 10px; text-align: right;">₹${subTotal.toFixed(2)}</td></tr>
-                                    <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px;">Discount</td><td style="padding: 10px; text-align: right;">(-) ₹${discount.toFixed(2)}</td></tr>
-                                    <tr style="background-color: #ecfdf5; font-weight: 700; color: #065f46;">
-                                        <td style="padding: 15px; font-size: 18px;">Grand Total</td><td style="padding: 15px; text-align: right; font-size: 18px;">₹${grandTotal.toFixed(2)}</td></tr>`;
+                                        <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px;">Subtotal</td><td style="padding: 10px; text-align: right;">₹${subTotal.toFixed(2)}</td></tr>
+                                        <tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 10px;">Discount</td><td style="padding: 10px; text-align: right;">(-) ₹${discount.toFixed(2)}</td></tr>
+                                        <tr style="background-color: #ecfdf5; font-weight: 700; color: #065f46;">
+                                            <td style="padding: 15px; font-size: 18px;">Grand Total</td><td style="padding: 15px; text-align: right; font-size: 18px;">₹${grandTotal.toFixed(2)}</td></tr>`;
             }
             
             pdfContentHTML += `</table></td></tr></table>
-                        <div style="position: absolute; bottom: 0; left: 0; right: 0; padding-top: 15px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 10px; color: #94a3b8;">
+                        </div> <!-- End main content area -->
+                        <div style="padding-top: 15px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 10px; color: #94a3b8;">
                             <p style="margin: 0;">Thank you for your business!</p>
                             <p style="margin-top: 5px;">Design & Developed by Mr. Zubair Uddin</p>
                         </div>
@@ -428,13 +436,33 @@
             document.body.appendChild(pdfTemplate);
 
             try {
-                const canvas = await html2canvas(pdfTemplate.firstElementChild, { scale: 2 }); // Reduced scale for smaller file size
-                const imgData = canvas.toDataURL('image/jpeg', 0.9); // Use JPEG with quality setting
+                const canvas = await html2canvas(pdfTemplate.firstElementChild, { scale: 2 });
+                const imgData = canvas.toDataURL('image/jpeg', 0.9);
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
                 const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                const ratio = imgHeight / imgWidth;
+                const canvasHeightInPdf = pdfWidth * ratio;
+
+                let heightLeft = canvasHeightInPdf;
+                let position = 0;
+
+                pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPdf, undefined, 'FAST');
+                heightLeft -= pdfHeight;
+
+                while (heightLeft > 0) {
+                    position = heightLeft - canvasHeightInPdf;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, canvasHeightInPdf, undefined, 'FAST');
+                    heightLeft -= pdfHeight;
+                }
                 
-                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+                const pdfBlob = pdf.output('blob');
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                window.open(pdfUrl, '_blank');
+                
                 pdf.save(`Vegego-${documentType.replace(' ', '_')}-${generateDocumentId()}.pdf`);
 
             } catch (error) {
@@ -442,7 +470,6 @@
             } finally {
                 document.body.removeChild(pdfTemplate);
                 downloadBtn.innerHTML = `<svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>Download PDF`;
-                // Re-enable button only if client name is present
                 if (clientName.trim() !== '' && Object.keys(cart).length > 0) {
                     downloadBtn.disabled = false;
                 }
@@ -458,7 +485,6 @@
                 clientNameInput.classList.remove('border-red-500');
                 clientNameError.classList.add('hidden');
             }
-            // Update preview and button state
             if (Object.keys(cart).length > 0) {
                 updateBillPreview();
             } else {
